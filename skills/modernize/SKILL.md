@@ -1,8 +1,8 @@
 ---
 name: modernize
 description: >-
-  For getting old prs up to date. Use when asked to rebase a pr or
-  "modernize".
+  Assess and update an aging pull request. Use when asked to modernize or
+  rebase a PR.
 ---
 
 # Modernize
@@ -12,14 +12,14 @@ PR still belongs in the product.
 
 ## Guardrails
 
-- Always check to make sure you have pulled latest origin for your branch, main
-  branch, and any other branch related to your work before starting.
+- Fetch the latest tips of the actual PR head and base before starting.
 - Treat existing worktree changes as user-owned. Use a disposable worktree when
   the active worktree is dirty or is being used for other work.
-- Modernizing authorizes rebasing and updating the PR branch. It does not
-  authorize merging, closing, changing the base branch, or expanding scope.
-- Never use an unqualified force push. Update a rebased branch with
-  `--force-with-lease` against the head SHA observed before the rebase.
+- Preserve published history. Rebase a local copy to assess compatibility.
+  To update the existing PR, merge its base into the PR branch when the
+  repository permits it and the update is authorized. When policy requires a
+  linear history, prepare a rebased local branch and report it. Publish a
+  replacement branch or PR only when authorized.
 - Do not post a PR comment unless the user asked for one. Use the
   `leaving-pr-comments` skill for every comment posted on the user's behalf.
 
@@ -58,7 +58,8 @@ Do not describe a PR as current merely because Git reports no conflicts.
 Use one of these recommendations:
 
 - **MODERNIZE**: the goal is still useful and the implementation remains the
-  right shape. Rebase, resolve conflicts, test, and update the branch.
+  right shape. Update the branch using a method allowed by the guardrails,
+  resolve conflicts, and test.
 - **REWORK**: the goal is still useful, but a mechanical rebase would preserve
   the wrong implementation. Explain the smallest credible rewrite and stop
   before pushing unless the user also asked for that rework.
@@ -69,22 +70,22 @@ Use one of these recommendations:
 Be willing to recommend `CLOSE`. Age alone is not evidence, and sunk effort is
 not a reason to keep a PR alive.
 
-## Rebase without losing intent
+## Update the branch
 
 For a `MODERNIZE` disposition:
 
 1. Create a safe local branch or disposable worktree at the recorded PR head.
-2. Rebase its commits onto the freshly fetched base branch.
-3. Resolve each conflict according to the PR's current intent and the base
-   branch's newer invariants. If a conflict reveals a product or architecture
-   disagreement, stop and reconsider the disposition instead of guessing.
-4. Compare the pre-rebase and post-rebase commit series with `git range-diff`
-   and inspect the final diff. Confirm that no intentional behavior disappeared
-   and no already-landed behavior was reintroduced.
-5. Run the repository's focused checks for the touched area. Distinguish real
-   failures from pre-existing or infrastructure failures.
-6. Push with `--force-with-lease` tied to the previously observed remote head.
-   If the lease fails, fetch and reassess rather than overwriting new work.
+2. Update it from the freshly fetched base using the allowed method.
+3. Resolve conflicts using the PR's intent and the base branch's current
+   behavior. Reconsider the disposition if the conflict reveals a product or
+   architecture disagreement.
+4. Review the final diff against the base. For a local rebase, also compare
+   the commit series with `git range-diff`. Check for lost behavior and
+   reintroduced changes.
+5. Run focused checks for the affected area. Distinguish failures caused by
+   the change from pre-existing or infrastructure failures.
+6. Before an authorized push, confirm the remote head still matches the one
+   you reviewed. If it moved, fetch and reassess.
 
 Do not merge the PR.
 
@@ -94,7 +95,7 @@ Lead with `MODERNIZE`, `REWORK`, or `CLOSE` and the reason. Then summarize:
 
 - meaningful changes on the base branch;
 - conceptual conflicts or confirmation that none were found;
-- the rebase and push result, if performed;
+- the branch update and push result, if performed;
 - checks run and their results;
 - the remaining decision or work, with a link to the PR.
 

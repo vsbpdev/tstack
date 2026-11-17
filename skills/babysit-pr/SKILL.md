@@ -5,8 +5,9 @@ description: Monitor a pull request through review and CI. Use when the user ask
 
 # Babysit PR
 
-Many repos have AI review bots. They're helpful, even if they are not always
-right.
+Confirm the PR, its current head, and what the user authorized. Monitoring
+alone is read-only. Fix, push, post replies, resolve threads, or merge only
+within the user's authorization and repository policy.
 
 ## Waiting
 
@@ -16,7 +17,7 @@ both on the same PR. Every watcher on a GitHub account shares one rate limit.
 
 ### In T3 Code: `watch_pull_request`
 
-Handle the existing checks and comments first. Then call
+Triage the existing checks and comments first. If work is still pending, call
 `watch_pull_request` and end your turn. T3 Code wakes you with a message when
 a check fails, the required checks pass, someone comments or reviews, or the
 branch conflicts.
@@ -48,13 +49,14 @@ It prints one line per real event. It exits 0 when the `--until` condition is
 met or the PR merges, 1 when it needs you (a required check failed, conflicts,
 unresolved threads, PR closed), and 2 on bad input.
 
-- `ready` (default): required checks green, Greptile or Macroscope reviewed the
-  head, and no unresolved threads. Use this to babysit.
-- `green`: required checks only. Use it when the repo has no Greptile or
-  Macroscope.
-- `any-change`: exit on the first event.
+- `ready` (script default): green checks, a Greptile or Macroscope review on
+  the current head, and no unresolved threads. Use when those are the gates.
+- `green`: use when waiting for required CI. With no configured required
+  checks, the script treats ordinary CI failures as blocking.
+- `any-change`: exit on the first event. Use for other reviews, approvals, or
+  advisory CI. Evaluate readiness directly in GitHub when no CI runs.
 
-In Claude Code, run it with the Monitor tool (`timeout_ms: 3600000`), so each
+In Claude Code, when available, run it with the Monitor tool (`timeout_ms: 3600000`), so each
 line wakes you. Without a monitor, run it as one long command. It ends on its
 own.
 
@@ -75,20 +77,21 @@ used up, the REST limit is separate and usually still has room. Use
 
 ## Reviews
 
-Only act on checks and comments newer than the latest push. Verify every bot
-finding against the source before changing code. Fix real findings and CI
-failures, distinguish repository failures from infrastructure flakes, and reply
-with a written reason when dismissing false positives.
+Check findings against the current head before acting, including unresolved
+feedback that predates the latest push. Verify each finding against the source
+before changing code. When authorized, fix real findings and CI failures.
+Distinguish repository failures from infrastructure flakes. Report findings to
+the user when the task is monitoring only.
 
 If the repo has `.macroscope/check-run-agents/*.md`, read those rules before you
 reply to a Macroscope finding. Its findings cite them.
 
-CodeRabbit is advisory. Treat its findings like any other finding, but never
-wait for it and never hold a merge for it.
+Use the repository's required checks and review gates. Treat CodeRabbit as
+advisory when the repository does.
 
-If a review bot leaves feedback you believe is not worth addressing, reply with
-a written reason and resolve the comment. Use the `leaving-pr-comments` skill
-for every comment posted on the user's behalf.
+For an authorized dismissal, reply with a concrete reason and resolve the
+thread after verifying the reply. Use [leaving-pr-comments](../leaving-pr-comments/SKILL.md)
+for GitHub replies.
 
 Screenshots and videos help as well, when you have a way to upload them.
 
@@ -101,17 +104,16 @@ narrows code.
 
 ## Base branch and merging
 
-Keep an eye on changes to `main` and rebase when needed. `pr-wait` reports when
+Track changes to the PR's actual base branch. `pr-wait` reports when
 new base commits touch this PR's files, and when the PR becomes BEHIND or DIRTY.
 `watch_pull_request` reports conflicts only, so check for BEHIND yourself
 before you call the PR ready.
 If an overlapping PR makes this one obsolete, stop monitoring, report it to the
 user, and ask before closing the PR unless closure was explicitly authorized.
 
-If nothing has changed, stay quiet rather than posting filler comments. Stop
-when `pr-wait` exits 0, or in T3 Code when the merge gate passes on the latest
-head. Merge only when the user explicitly requested it;
-otherwise report that the PR is ready. Right before a merge, run `git fetch` and
-check the PR again. Never merge when it is BEHIND or DIRTY, or when base commits
-that landed after the last green run touch this PR's files. Rebase, push, and
-wait for green again.
+A watcher exit or event is a cue to re-read the current head, checks,
+reviews, human approvals, and mergeability. If the branch needs an update,
+follow [modernize](../modernize/SKILL.md) when authorized and preserve published
+history. Wait for the required checks again after updating the head. In
+monitoring-only mode, report any action needed. Merge only with explicit
+authorization and a passing repository merge gate.

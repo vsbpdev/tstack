@@ -5,12 +5,9 @@ description: Use when the user says "sol loop".
 
 # sol-loop
 
-This is a workflow for making your code changes more correct before (or
-sometimes after) filing a pull request. tl;dr - use OpenAI's GPT Sol to review
-your code in a loop.
+Use a fresh Codex Sol reviewer to check the change and verify substantive fixes.
 
-Make the most minimal possible changes to appease the Sol reviewers. Be careful
-of scope creep and don't be scared to push back.
+Make the smallest fixes that address findings you can verify.
 
 ## Budget
 
@@ -45,21 +42,21 @@ missing or pre-failing checks in the brief.
 
 ## 2. Start Sol
 
-In T3, call `orchestrator_capabilities`. Pick the latest Sol unless the user
-named a version. Do not hardcode an ID. Record provider, model, and effort
-only if exposed. Use `delegate_task` every round (`role: "review"`,
-`mode: "async"`). Save `taskId`. New `clientRequestId` per round.
-`childThreadId` is storage, not the next target. Do not use
-`t3_thread_send`, `create_threads`, or `t3_thread_launch` for review.
+Resolve the Codex Sol model and effort from the active instructions. Keep a
+configured pin. Use high effort when available if no effort is specified.
+Select only a Codex Sol model. In T3, match the setting against
+`orchestrator_capabilities` and pass the resolved provider instance, model and
+effort options in the live `delegate_task` target schema. Use `role: "review"`,
+`mode: "async"` and a new `clientRequestId` per round. Keep the returned
+`taskId` and read it via `task_status` after the completion wake. Use
+`task_cancel` if a running review needs to stop.
 
-If T3 tools are not listed, try one direct capability call. Outside T3, use
-a native Sol subagent and keep its ID. In Claude Code, use a custom subagent
-only if it is set up to run Sol. If no route runs Sol, report the blocker. Do
-not substitute a model.
+Outside T3, use an approved Codex dispatcher or a native Sol subagent that
+can select the configured model and effort. Report an unavailable selection
+without substituting another model.
 
-Do not edit scoped files while review runs. Wait for the notice. Do not
-poll or start a second reviewer. Timeout, error, or no reply is not
-approval. On failure, cancel, verify stop, restart with the ledger.
+Keep the reviewed files stable. Use the completion notification instead of
+polling. A timed-out or failed review leaves its findings unresolved.
 
 Round 1 brief (T3 children get no history):
 
@@ -107,13 +104,8 @@ no concern of your own. Stuck: an item stays disputed after two replies,
 or budget ends. Show both sides in 2-3 lines each. The user decides.
 Budget end is not approval.
 
-Do not push during the loop. Push after agreement only if the user asked
-to push, ship, or update the PR. If you push to a PR, add above the model
-blurb:
+Push after review agreement only if authorized. Keep the model, effort, verdict,
+rounds, and finding dispositions in the private work summary. In any public
+PR text, describe the change and checks run.
 
-`Reviewed with sol-loop: <N> rounds with <model>. Sol verdict: approved`.
-
-Add `on <effort>` only if verified.
-
-Report: rounds, model, what Sol changed, diff size before/after, fixed and
-declined findings with reasons, usage if exposed (else say not), pushed or not.
+Report the checks, fixes, material declined findings, and remaining issues.

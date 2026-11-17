@@ -1,62 +1,38 @@
 ---
 name: council
-description: Trigger this if the user says 'council'.
+description: Use when the user asks for a council or a cross-provider review panel with Claude and Codex.
 ---
 
 # Council
 
-Before an audit, address outstanding PR comments, fix known issues, and run
-relevant checks. Give council the updated implementation; do not defer known
-fixes until reviews return. If the user wants to discard the implementation
-and explore new ideas, skip fixes to code being replaced.
+Fix known in-scope issues and run relevant checks before sending code for
+review. For an ideas council, state the decision and constraints instead.
 
-Bring in three delegates to help with the user's request, usually for review
-or feedback. Use one strong model from each of three different providers, at
-high reasoning effort. If the user's instructions name council members, use
-those. Otherwise pick the latest flagship model from each provider, for
-example Claude Opus, GPT Sol, and Gemini Pro.
+Use one Claude reviewer and one Codex reviewer by default. Read the active
+project and user instructions for the models, effort, and any additional
+seat. All seats use Claude or Codex. Use high effort when supported and no
+effort is specified. Honor configured pins and report an
+unavailable seat. Continue with useful feedback from the available seats,
+and report incomplete coverage if a requested or required seat could not run.
 
-In T3 Code, use `orchestrator_capabilities` to resolve the models, then
-`delegate_task` to start one delegate per model in parallel. Elsewhere, use
-the harness's subagent tools. If you cannot reach three providers, or a named
-member is unavailable, report it instead of substituting.
+In T3 Code, resolve each seat with `orchestrator_capabilities`. Pass its
+exposed provider instance, model, and effort options in the live
+`delegate_task` target schema. Start independent, read-only review tasks
+with `role: "review"` and `mode: "async"`. Each brief must include the goal,
+scope, repository and diff range or decision, checks, and any uncommitted
+files to inspect. Keep each `taskId`, yield when there is nothing independent
+left to do, and collect with `task_status` after the completion wake. Outside
+T3, use approved native subagents or project dispatchers that can select the
+configured models.
 
-Give each delegate the request and relevant context. For review or feedback,
-keep their work read-only. Collect their responses and summarize the useful
-findings, disagreements, and recommended next steps.
+Have each reviewer return concrete findings with evidence and user impact,
+or a clear verdict for the scope reviewed. Check findings against the source
+before acting. Keep the reviewed files stable while reviewers inspect them.
+Use one round by default. If a fix changes behavior or a material finding
+needs confirmation, ask the relevant reviewer for one focused follow-up.
+Follow the project's review gates for any further rounds. Report unresolved
+material disagreements with evidence and the decision still needed.
 
-Do not wait idle. When a result arrives, check its findings against the code
-at once and decide what to fix while the other delegates run. Do not edit
-files while a delegate still reviews the same checkout. If the user's
-instructions mark a delegate as non-blocking, do not wait for it; treat a
-late result as feedback and do not record its score.
-
-For a code review, ask each delegate for a score out of 10.
-Count each full review pass as one round.
-A fresh review after fixes starts a new round.
-
-If the work ends in a pull request, put the results in the PR description.
-Put this section before the model and harness line at the end:
-
-```markdown
-## Council review
-
-Rounds: 2
-
-| Delegate | Round 1 | Round 2 |
-| --- | --- | --- |
-| Claude Opus | 7/10 | 9/10 |
-| GPT Sol | 8/10 | 10/10 |
-| Gemini Pro | 7/10 | 9/10 |
-```
-
-If a delegate gives no score, write `no score`. Do not invent one.
-If the PR is open, edit the description. Do not post a comment for this.
-If there is no PR, put the same results in the final reply only.
-
-If you agree with their recommendations, make the changes and request a fresh
-review after. Continue this process until all delegates are satisfied with the
-outcome.
-
-Do not let repeated reviews result in scope creep. It is your job to fight to
-keep scope limited.
+Keep each reviewer's identity, rounds, and verdicts in the private work
+summary. Where a PR calls for verification details, describe the checks run
+and the behavior verified.

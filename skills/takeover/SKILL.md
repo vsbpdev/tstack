@@ -18,11 +18,11 @@ your fixes separately. Honor an explicitly requested in-place or stacked
 continuation instead. Do not overwrite unrelated work or change the original
 PR without authorization.
 
-Preserve Git authorship and existing co-author trailers. Credit the original
-contributors in the PR description and link the original PR when there is one.
-If the work will be squashed, preserve human author/co-author credit in the
-merge commit too, using verified identities rather than guessed emails. Model
-attribution is not a substitute for contributor credit.
+Preserve existing Git history and human contributor credit. Credit the
+original human contributors in the PR description and link the original PR
+when the link is safe to share. When preparing a squash message, use verified
+identities for human author and co-author credit. Apply the
+[file-pr](../file-pr/SKILL.md) publication rules to newly written text.
 
 Use `modernize` to update the continuation against its intended base and
 current architecture. Rework what is necessary to finish the same goal, not

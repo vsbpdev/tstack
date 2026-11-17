@@ -5,9 +5,11 @@ description: File a concise pull request. Use when the user asks to file, open, 
 
 # File PR
 
-Before filing, check whether a PR for this branch already exists. Review the
-diff locally against the base branch (usually `origin/main`) to make sure its
-contents match the goal.
+Confirm the repository is approved for publication and the user authorized
+a PR there. Verify the target owner, repository, and base. Check for an existing
+PR on this branch and review the diff against its intended base before uploading.
+Confirm the remote head contains the intended commits and excludes unrelated
+work. Push the relevant branch only when authorized.
 
 PR titles usually become commit messages, so follow the repository's title
 conventions. Look at recently merged PRs and Git history for examples. Prefer a
@@ -33,18 +35,17 @@ GOOD
 
 > ✅ My "new worktree" default was ignored when starting new threads on existing worktrees. Super unintuitive. Now your preferences always apply.
 
-End the description with the public model name and harness that made the
-changes, for example `Created with <model> in <harness>.` Include subagent
-models that wrote part of the change. Use the model name the harness reports.
-If model identity is unavailable, name the harness without guessing a model.
+Include verification only for checks you actually ran. Keep public titles,
+descriptions, and commit messages focused on the problem, change, and
+evidence. Omit model names, agent and harness credits, session links, internal
+review reports, and generated co-author trailers. Verify human credits when
+due. Preview the final text and attachments for private information and secrets.
 
-Before submission, check the title, description, quotes, and attachments for
-secrets and private details.
-
-Open a real PR rather than a draft so review bots run. If `gh pr create` fails
-because the GraphQL rate limit is used up, open it through REST with
-`gh api repos/<owner>/<repo>/pulls -f title=... -f head=... -f base=... -F body=@<file>`. If the user also asked
-to babysit it, continue with the `babysit-pr` skill.
+Use the requested draft status or the repository's convention. If
+`gh pr create` hits the GraphQL rate limit, check whether the PR was created
+before retrying through REST. Preserve the intended target, head, base, and draft
+status, and submit the reviewed body from a file. If the user also asked to
+babysit it, continue with the [babysit-pr](../babysit-pr/SKILL.md) skill.
 
 Do not post a follow-up PR comment unless it serves the user's request. When a
 comment is needed, use the `leaving-pr-comments` skill.
